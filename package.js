@@ -1,17 +1,27 @@
 Package.describe({
-  name: 'office365-events',
+  name: 'wiseguyeh:office-365-events',
   version: '0.0.1',
-  // Brief, one-line summary of the package.
-  summary: '',
-  // URL to the Git repository containing the source code for this package.
-  git: '',
-  // By default, Meteor will default to using README.md for documentation.
-  // To avoid submitting documentation, set this field to null.
+  summary: 'Provides a fluent interface for managing a user\'s Office 365 calendar events',
+  git: 'https://github.com/djluck/office365-events',
   documentation: 'README.md'
 });
 
 Package.onUse(function(api) {
   api.versionsFrom('1.1');
-  api.addFiles('office365-events.js');
-    api.imply('mrt:moment-timezone', 'server');
+  setupCommonPackageProperties(api);
 });
+
+//Package.onTest(function (api) {
+//  setupCommonPackageProperties(api);
+//  api.use(["sanjo:jasmine"]);
+//  api.imply(["sanjo:jasmine"]);
+//  api.addFiles("tests/jasmine/server/unit/tests.js", ["client", "server"]);
+//});
+
+function setupCommonPackageProperties(api){
+  api.use(['wiseguyeh:azure-active-directory', 'underscore'], 'server');
+  api.imply('mrt:moment-timezone@0.2.1');
+  api.imply('wiseguyeh:azure-resource-office-365', 'server')
+  api.addFiles('office365-events.js');
+  api.export("Office365");
+}
