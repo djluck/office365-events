@@ -10,7 +10,7 @@ Office365.event = {
         if (_.isString(userOrUserId)) {
             user = Meteor.users.findOne(userOrUserId);
         }
-        else if (testIsUserObject(userOrUserId)){
+        else if (isUserObject(userOrUserId)){
             user = userOrUserId;
         }
         else{
@@ -46,43 +46,17 @@ function buildFluentObject(user){
             };
             return fluentObject;
         },
-        attendees : function(userIdsOrUsers){
-            var users;
+        attendees : function(attendees){
+            /*
+             Accepted argument types:
+             - A single email address
+             - A user id
+             - A user object
+             - An array, containing a mix of any of the above
+             */
 
-            //check the type of the parameter and extract the users
-            if (_.isString(userIdsOrUsers)) {
-                users = [Meteor.users.findOne(userIdsOrUsers)];
-            }
-            else if (testIsUserObject(userIdsOrUsers)){
-                users = [userIdsOrUsers];
-            }
-            else if (_.isArray(userIdsOrUsers) && _.isEmpty(userIdsOrUsers)){
-                throwError("Argument list is empty", "userIdsOrUsers");
-            }
-            else if (_.isArray(userIdsOrUsers) && _.isString(_.first(userIdsOrUsers))){
-                users = Meteor.users.find({ _id : { $in : userIdsOrUsers}}).fetch();
-            }
-            else if (_.isArray(userIdsOrUsers) && testIsUserObject(_.first(userIdsOrUsers))){
-                users = userIdsOrUsers;
-            }
-            else{
-                throwError(
-                    "Unexpected type of argument",
-                    "userIdsOrUsers",
-                    "userIdsOrUsers must be either: 1.) a user id 2.) a user 3.) a list of user ids 4.) a list of users"
-                );
-            }
-
-            _.each(users, assertUserWithAzureAdServiceDefined);
-
-            restRequest.Attendees = _.map(users, function(user){
-                return {
-                    EmailAddress : {
-                        Name : user.services.azureAd.displayName,
-                        Address : user.services.azureAd.mail || user.services.azureAd.userPrincipleName
-                    }
-                }
-            });
+            restRequest.Attendees = _.isArray(attendees) ?
+                getEmailAddressesFromAttendeeArray(attendees) : [getEmailAddressFromAttendee(attendees)];
 
             return fluentObject;
         },
@@ -143,10 +117,68 @@ function checkForMomentTimeZone(obj){
         throw new Meteor.Error("office365-events:Invalid argument type", "momentTz", "Please supply a moment timezone");
 }
 
-function testIsUserObject(obj){
+function isUserObject(obj){
     return Match.test(obj, Match.ObjectIncluding({
         _id : String
     }));
+}
+
+function getEmailAddressesFromAttendeeArray(attendees) {
+    //get all meteor ids and load them separately as it's more effecient than doing a load for each id
+    var userIdsAndOthers = _.groupBy(attendees, isObjectId);
+    var userIds = userIdsAndOthers.true || [];
+    var others = userIdsAndOthers.false || [];
+    var users = users = Meteor.users.find({ _id : { $in : userIds}}).fetch();
+
+    return _.chain(_.union(users, others))
+        .map(getEmailAddressFromAttendee)
+        .value();
+}
+
+function getEmailAddressFromAttendee(attendee){
+    if (isEmailAddress(attendee)){
+        return {
+            EmailAddress : {
+                Address : attendee
+            }
+        };
+    }
+    else if (isObjectId(attendee)){
+        var user = Meteor.users.findOne(attendee);
+        if (!user)
+            throwError("Specified user did not exist", "attendees", "You supplied an id for a user that does not exist");
+
+        return mapUserToEmailAddress();
+    }
+    else if (isUserObject(attendee)){
+        return mapUserToEmailAddress(attendee);
+    }
+    else{
+        throwError(
+            "Unexpected type of argument",
+            "attendees",
+            "attendees must be either: 1.) a user id 2.) a user 3.) an email address 4.) a list comprised of any of the previous 3"
+        );
+    }
+}
+
+function mapUserToEmailAddress(user){
+    assertUserWithAzureAdServiceDefined(user);
+
+    return {
+        EmailAddress : {
+            Name : user.services.azureAd.displayName,
+            Address : user.services.azureAd.mail || user.services.azureAd.userPrincipleName
+        }
+    }
+}
+
+function isEmailAddress(obj){
+    return _.isString(obj) && /.+@.+/.test(obj);
+}
+
+function isObjectId(obj){
+    return _.isString(obj) && /[0-9a-f]{24}/.test(obj);
 }
 
 function assertUserWithAzureAdServiceDefined(user){
@@ -155,7 +187,7 @@ function assertUserWithAzureAdServiceDefined(user){
     if (!isValid) {
         throwError(
             "User is missing AzureAd credentials",
-            "The user has not authenticated yet.",
+            "The user '" + user._id + "' has not authenticated yet.",
             "Ensure the user has authenticated via the accounts-azure-active-directory/azure-active-directory package"
         );
     }

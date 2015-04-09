@@ -18,7 +18,7 @@ Package.onUse(function(api) {
 //});
 
 function setupCommonPackageProperties(api){
-  api.use(['wiseguyeh:azure-active-directory', 'underscore'], 'server');
+  api.use(['wiseguyeh:azure-active-directory', 'underscore@1.0.3'], 'server');
   api.imply('mrt:moment-timezone@0.2.1');
   api.imply('wiseguyeh:azure-resource-office-365', 'server')
   api.addFiles('office365-events.js');
