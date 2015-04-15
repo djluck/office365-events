@@ -1,6 +1,6 @@
 Package.describe({
   name: 'wiseguyeh:office-365-events',
-  version: '0.0.2',
+  version: '0.1.2',
   summary: "Provides a fluent interface for managing a user's Office 365 calendar events",
   git: 'https://github.com/djluck/office365-events'
 });
