@@ -2,12 +2,8 @@ Office365 = {};
 
 Office365.event = {
     runByUser : function(userOrUserId){
-        if (!userOrUserId) {
-            throwError("Missing argument", "userOrUserId");
-        }
-
         var user = null;
-        if (_.isString(userOrUserId)) {
+        if (isObjectId(userOrUserId)) {
             user = Meteor.users.findOne(userOrUserId);
         }
         else if (isUserObject(userOrUserId)){

@@ -1,6 +1,6 @@
 Package.describe({
   name: 'wiseguyeh:office-365-events',
-  version: '0.0.1',
+  version: '0.0.2',
   summary: "Provides a fluent interface for managing a user's Office 365 calendar events",
   git: 'https://github.com/djluck/office365-events'
 });
@@ -18,7 +18,7 @@ Package.onUse(function(api) {
 //});
 
 function setupCommonPackageProperties(api){
-  api.use(['wiseguyeh:azure-active-directory', 'underscore@1.0.3'], 'server');
+  api.use(['wiseguyeh:azure-active-directory', 'underscore@1.0.3', 'match'], 'server');
   api.imply('mrt:moment-timezone@0.2.1');
   api.imply('wiseguyeh:azure-resource-office-365', 'server')
   api.addFiles('office365-events.js');
