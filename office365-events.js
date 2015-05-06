@@ -10,7 +10,7 @@ Office365.event = {
             user = userOrUserId;
         }
         else{
-            throwError("Argument incorrect type", "userIdsOrUsers", "The supplied argument was not a user or user id");
+            throwError("Argument incorrect type", "userIdsOrUsers", "The supplied argument was not a user or user id", userOrUserId);
         }
 
         assertUserWithAzureAdServiceDefined(user);
@@ -114,9 +114,7 @@ function checkForMomentTimeZone(obj){
 }
 
 function isUserObject(obj){
-    return Match.test(obj, Match.ObjectIncluding({
-        _id : String
-    }));
+    return !!obj && _.isObject(obj) && "_id" in obj && isObjectId(obj._id);
 }
 
 function getEmailAddressesFromAttendeeArray(attendees) {
@@ -144,7 +142,7 @@ function getEmailAddressFromAttendee(attendee){
         if (!user)
             throwError("Specified user did not exist", "attendees", "You supplied an id for a user that does not exist");
 
-        return mapUserToEmailAddress();
+        return mapUserToEmailAddress(user);
     }
     else if (isUserObject(attendee)){
         return mapUserToEmailAddress(attendee);
@@ -174,7 +172,7 @@ function isEmailAddress(obj){
 }
 
 function isObjectId(obj){
-    return _.isString(obj) && /[0-9a-f]{24}/.test(obj);
+    return _.isString(obj) && /[0-9a-zA-Z]{10,}/.test(obj);
 }
 
 function assertUserWithAzureAdServiceDefined(user){
@@ -189,6 +187,9 @@ function assertUserWithAzureAdServiceDefined(user){
     }
 }
 
-function throwError(error, reason, details){
+function throwError(error, reason, details, actualValue){
+    if (!!actualValue) {
+        details += ". Valued passed was: " + JSON.stringify(actualValue);
+    }
     throw new Meteor.Error("office365-events:" + error, reason, details);
 };

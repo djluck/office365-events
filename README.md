@@ -18,3 +18,6 @@ Please refer to the [Wiki](https://github.com/djluck/office365-events/wiki)
         .create();
 
 The [Wiki](https://github.com/djluck/office365-events/wiki) contains more examples and notes on using this package.
+
+##Unit tests
+You can run the package unit tests with `meteor test-packages wiseguyeh:office-365-events`

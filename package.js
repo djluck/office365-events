@@ -7,20 +7,24 @@ Package.describe({
 
 Package.onUse(function(api) {
   api.versionsFrom('1.1');
-  setupCommonPackageProperties(api);
+  setupCommon(api);
 });
 
-//Package.onTest(function (api) {
-//  setupCommonPackageProperties(api);
-//  api.use(["sanjo:jasmine"]);
-//  api.imply(["sanjo:jasmine"]);
-//  api.addFiles("tests/jasmine/server/unit/tests.js", ["client", "server"]);
-//});
+Package.onTest(function (api) {
+  setupCommon(api);
+  api.use(["tinytest", "accounts-password", "practicalmeteor:sinon@1.10.3_2"]);
+  api.imply(["tinytest", "accounts-password", "practicalmeteor:sinon@1.10.3_2", "mrt:moment-timezone@0.2.1"]);
+  api.addFiles([
+        "tests/lib.js",
+        "tests/tests.js"
+      ],
+      "server"
+  );
+});
 
-function setupCommonPackageProperties(api){
-  api.use(['wiseguyeh:azure-active-directory@0.3.1', 'underscore@1.0.3', 'check'], 'server');
-  api.imply('mrt:moment-timezone@0.2.1');
+function setupCommon(api){
+  api.use(['wiseguyeh:azure-active-directory@0.3.1', 'underscore@1.0.3'], 'server');
   api.imply('wiseguyeh:azure-resource-office-365@0.1.1', 'server')
-  api.addFiles('office365-events.js');
-  api.export("Office365");
+  api.addFiles('office365-events.js', 'server');
+  api.export("Office365", "server");
 }
